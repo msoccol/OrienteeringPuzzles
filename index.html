@@ -192,7 +192,7 @@ function sortear(qtd) {
 
 function montarTeste(qtd) {
   const sorteados = sortear(qtd);
-  const imagens = sorteados.map(d => [d[0], 'controles/'+ d[1]]);
+  const imagens = sorteados.map(d => [d[0], 'Controles/'+ d[1]]);
   const respostas = sorteados.map(d => [d[0], d[2]]);
   const metade = Math.ceil(imagens.length / 2);
 
@@ -268,3 +268,4 @@ window.addEventListener('DOMContentLoaded', () => montarTeste(12));
 </script>
 </body>
 </html>
+
