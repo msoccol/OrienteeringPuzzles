@@ -1,10 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Descrição do Controle</title>
 <style>
+	.travado {
+	  opacity: 0.5;
+	  cursor: not-allowed !important;
+	}
+  .container.hidden {
+    display: none;  !important;
+  }
+
   body {
     font-family: Arial, sans-serif;
     margin: 1rem;
@@ -98,6 +106,11 @@
 </head>
 <body>
 <h3>Arraste a descrição até a imagem correspondente</h3>
+<div id="status" style="text-align:center; font-size:1.2rem; margin-bottom:1rem;">
+  <b>Tempo:</b> <span id="tempo">00:00:00</span> —
+  <b>Resultado:</b> <span id="resultado">---</span>
+</div>
+
 <div class="container">
   <div class="col" id="imagens1"></div>
   <div class="col" id="respostas"></div>
@@ -105,6 +118,8 @@
 </div>
 
 <script>
+const quantidade = 12;
+
 const definirArray = () => [
   [101,'D101_Terraco.jpg','Terraço, Platô'],
   [102,'D102_Esporao.jpg','Esporão'],
@@ -182,6 +197,68 @@ const definirArray = () => [
 
 ];
 
+let testeFinalizado = false;
+
+function travarTeste() {
+   // desabilita inputs
+  document.querySelectorAll('#respostas input').forEach(inp => {
+    inp.disabled = true;
+    inp.classList.add('travado');
+  });
+
+  // trava imagens
+  document.querySelectorAll('#imagens1 img, #imagens2 img').forEach(img => {
+    img.style.pointerEvents = 'none';
+    img.classList.add('travado');
+  });
+
+  // trava itens arrastáveis
+  document.querySelectorAll('#respostas li').forEach(li => {
+    li.draggable = false;
+    li.style.pointerEvents = 'none';
+    li.classList.add('travado');
+  });
+
+  // desabilita botão
+  const botao = document.getElementById('btn-verificar');
+  if (botao) {
+    botao.disabled = true;
+    botao.style.background = '#888';
+    botao.style.cursor = 'not-allowed';
+  }
+}
+
+let tempo = 0;        // tempo total em milissegundos
+let timer = null;
+
+function formatarTempo(msTotal) {
+  const min = String(Math.floor(msTotal / 60000)).padStart(2, "0");
+  const seg = String(Math.floor((msTotal % 60000) / 1000)).padStart(2, "0");
+  const ms  = String(Math.floor((msTotal % 1000) / 10)).padStart(2, "0"); // 0–99
+
+  return `${min}:${seg}:${ms}`;
+}
+
+function iniciarCronometro() {
+  if (timer) clearInterval(timer);
+
+  tempo = 0;
+  document.getElementById("tempo").textContent = "00:00:00";
+
+  timer = setInterval(() => {
+    tempo += 10; // incrementa em 10 ms
+    document.getElementById("tempo").textContent = formatarTempo(tempo);
+  }, 10);
+}
+
+function pararCronometro() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+
 let itemSelecionado = null;
 
 function sortear(qtd) {
@@ -199,6 +276,7 @@ function montarTeste(qtd) {
   const imagens1 = document.getElementById('imagens1');
   const imagens2 = document.getElementById('imagens2');
   const respostasDiv = document.getElementById('respostas');
+  iniciarCronometro();
 
   // imagens
   imagens.forEach((imgData, i) => {
@@ -242,6 +320,13 @@ function montarTeste(qtd) {
         const id = img.dataset.id;
         document.getElementById('rot' + id).value = itemSelecionado[1];
         document.getElementById('rot' + id).dataset.resp = itemSelecionado[0];
+		
+		const liUsado = document.querySelector(`li[data-id="${itemSelecionado[0]}"]`);
+			if (liUsado) {
+			liUsado.style.opacity = "0.4";
+			liUsado.style.pointerEvents = "none"; // evita reutilizar
+		}
+
       }
     });
   });
@@ -249,23 +334,63 @@ function montarTeste(qtd) {
   // botão verificar
   const botao = document.createElement('button');
   botao.textContent = 'Verificar Respostas';
+  botao.id = 'btn-verificar';
   botao.addEventListener('click', checarRespostas);
   respostasDiv.appendChild(botao);
+  
+  //botão Novo Teste
+  const botaoNovo = document.createElement('button');
+  botaoNovo.textContent = 'Novo Teste';
+  botaoNovo.style.background = '#555';
+
+  botaoNovo.addEventListener('click', () => {
+  // mostrar container
+  document.querySelector('.container').style.display = 'grid';
+  
+  testeFinalizado = false;
+  
+  pararCronometro();
+  
+  // limpar tudo
+  document.getElementById('imagens1').innerHTML = '';
+  document.getElementById('imagens2').innerHTML = '';
+  document.getElementById('respostas').innerHTML = '';
+  document.getElementById('resultado').textContent = "---";
+
+  // montar novamente
+  montarTeste(quantidade);
+
+  // iniciar contagem
+  iniciarCronometro();
+  });
+
+respostasDiv.appendChild(botaoNovo);
+
 }
 
 function checarRespostas() {
+  pararCronometro();
+
   const inputs = document.querySelectorAll('.rotulo');
-  let total = inputs.length, acertos = 0;
+  let total = inputs.length;
+  let acertos = 0;
+
   inputs.forEach(inp => {
     const id = inp.id.replace('rot','');
     const resposta = inp.dataset.resp;
     if (id === resposta) acertos++;
   });
-  alert(`Você acertou ${acertos} de ${total}`);
+
+  // exibe resultado na página
+  document.getElementById("resultado").textContent = `${acertos} / ${total}`;
+  testeFinalizado = true;     // trava tudo
+  pararCronometro();          // para o cronômetro
+
+  travarTeste();      
 }
 
-window.addEventListener('DOMContentLoaded', () => montarTeste(12));
+
+window.addEventListener('DOMContentLoaded', () => montarTeste(quantidade));
 </script>
 </body>
 </html>
-
