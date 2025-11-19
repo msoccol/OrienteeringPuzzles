@@ -353,7 +353,7 @@ function montarTeste(qtd) {
 		const liUsado = document.querySelector(`li[data-id="${itemSelecionado[0]}"]`);
 			if (liUsado) {
 			liUsado.style.opacity = "0.4";
-			liUsado.style.pointerEvents = "none"; // evita reutilizar
+			//liUsado.style.pointerEvents = "none"; // evita reutilizar
 		}
 
       }
@@ -423,3 +423,4 @@ window.addEventListener('DOMContentLoaded', () => montarTeste(quantidade));
 </script>
 </body>
 </html>
+
