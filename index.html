@@ -130,10 +130,46 @@ button {
 button:hover {
   background: #005fa3;
 }
+/* Painel flutuante de respostas */
+#painelRespostasBtn {
+  display: none; /* só aparece no mobile */
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background: #0078d7;
+  color: white;
+  padding: 14px 18px;
+  border-radius: 50px;
+  font-size: 1rem;
+  border: none;
+  z-index: 9999;
+}
+
+#painelRespostas {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 2px solid #ccc;
+  padding: 1rem;
+  max-height: 50%;
+  overflow-y: auto;
+  display: none;
+  z-index: 9998;
+}
+
+@media (max-width: 900px) {
+  #painelRespostasBtn { display: block; }
+  #respostas { display: none; } /* esconder respostas originais */
+}
 
 </style>
 </head>
 <body>
+<button id="painelRespostasBtn">Respostas ↑</button>
+<div id="painelRespostas"></div>
+
 <h3>Arraste a descrição até a imagem correspondente</h3>
 <div id="status" style="text-align:center; font-size:1.2rem; margin-bottom:1rem;">
   <b>Tempo:</b> <span id="tempo">00:00:00</span> —
@@ -313,7 +349,11 @@ function montarTeste(qtd) {
     const img = document.createElement('img');
     img.src = imgData[1];
     img.dataset.id = imgData[0];
-    img.addEventListener('click', () => colar(imgData[0]));
+    img.style.touchAction = "manipulation";
+
+	img.addEventListener('touchstart', () => colar(imgData[0]), {passive: true});
+	img.addEventListener('click', () => colar(imgData[0]));
+
     const rot = document.createElement('input');
     rot.type = 'text';
     rot.className = 'rotulo';
@@ -339,6 +379,18 @@ function montarTeste(qtd) {
     ul.appendChild(li);
   });
   respostasDiv.appendChild(ul);
+	// mobile: mover lista para painel flutuante
+	if (window.innerWidth < 900) {
+  document.getElementById("painelRespostas").innerHTML = "";
+  document.getElementById("painelRespostas").appendChild(ul);
+  
+  // botão abre/fecha painel
+  const btn = document.getElementById("painelRespostasBtn");
+  btn.onclick = () => {
+    const painel = document.getElementById("painelRespostas");
+    painel.style.display = painel.style.display === "block" ? "none" : "block";
+  };
+}
 
   // habilita drop nas imagens
   document.querySelectorAll('img').forEach(img => {
@@ -423,4 +475,3 @@ window.addEventListener('DOMContentLoaded', () => montarTeste(quantidade));
 </script>
 </body>
 </html>
-
