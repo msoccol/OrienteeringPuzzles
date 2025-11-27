@@ -60,6 +60,34 @@ h3 {
     font-size: 1.1rem;
     padding: 14px;
   }
+  
+  #painelRespostasBtn {
+    display: block; 
+  }
+  
+  #respostas {
+    display: none; /* seu painel móvel usa painelRespostas */
+  } /* esconder respostas originais */
+  
+  #controls {
+    padding: 0 1rem;
+  }
+  
+  #painelRespostas ul {
+    padding-bottom: 80px; /* garante espaço para o botão */
+    position: fixed;
+    bottom: 60px; /* deixa espaço para o botão */
+    right: 0;
+    left: 0;
+  }
+  
+  #painelRespostas {
+    max-height: 60vh;       /* aumenta área visível */
+    overflow-y: auto;       /* rolagem suave */
+    -webkit-overflow-scrolling: touch; /* melhora no iPhone/iPad */
+    padding: 1rem;
+    touch-action: pan-y;    /* deixa o gesto de rolar mais natural */
+  }
 }
 
 /* ---------------------------------- */
@@ -159,10 +187,7 @@ button:hover {
   z-index: 9998;
 }
 
-@media (max-width: 900px) {
-  #painelRespostasBtn { display: block; }
-  #respostas { display: none; } /* esconder respostas originais */
-}
+
 
 /* garante que os controles (botões) apareçam em mobile */
 #controls {
@@ -172,16 +197,14 @@ button:hover {
   align-items: center;
 }
 
-@media (max-width: 900px) {
-  #painelRespostasBtn { display: block; }
-  #respostas { display: none; } /* seu painel móvel usa painelRespostas */
-  #controls { padding: 0 1rem; }
-}
+
 /* destaque visual quando uma resposta estiver selecionada */
 li.selecionada {
   outline: 2px solid #0078d7;
   background: #e6f0fb;
 }
+
+
 
 </style>
 </head>
@@ -379,7 +402,7 @@ function colarRespostaEmImagem(imgId) {
   // marcar li como usada (cinza) e torná-la inativa
   if (selectedResponse.liEl) {
     selectedResponse.liEl.style.opacity = "0.4";
-    selectedResponse.liEl.style.pointerEvents = "none";
+    //selectedResponse.liEl.style.pointerEvents = "none";
     selectedResponse.liEl.classList.remove('selecionada');
   }
 
@@ -387,6 +410,20 @@ function colarRespostaEmImagem(imgId) {
   selectedResponse = null;
 }
 
+function atualizarOpacidadeResposta(idResposta) {
+  // verifica todos os campos
+  const aindaUsada = [...document.querySelectorAll('input[id^="rot"]')]
+    .some(campo => campo.dataset.resp === idResposta);
+
+  const li = document.querySelector(`li[data-id="${idResposta}"]`);
+  if (!li) return;
+
+  if (aindaUsada) {
+    li.style.opacity = "0.4"; // continua usada
+  } else {
+    li.style.opacity = "1";   // não está mais usada → volta ao normal
+  }
+}
 function montarTeste(qtd) {
   const sorteados = sortear(qtd);
   const imagens = sorteados.map(d => [d[0], 'Controles/'+ d[1]]);
@@ -450,6 +487,38 @@ function montarTeste(qtd) {
 
     ul.appendChild(li);
   });
+  // clique para selecionar resposta (mobile e desktop)
+  
+document.querySelectorAll('#respostas li').forEach(li => {
+  li.addEventListener('click', () => {
+
+    // Identifica qual resposta foi clicada
+    const idResposta = li.dataset.id;
+    const textoResposta = li.textContent.trim();
+
+    // Verifica se há uma imagem selecionada para receber o clique
+    if (!imgSelecionada) return;
+
+    const idImagem = imgSelecionada.dataset.id;
+    const campo = document.getElementById('rot' + idImagem);
+
+    // Guarda a resposta antiga antes de alterar
+    const respostaAntiga = campo.dataset.resp;
+
+    // Define a nova resposta
+    campo.value = textoResposta;
+    campo.dataset.resp = idResposta;
+
+    // Marca a resposta nova como usada
+    li.style.opacity = "0.4";
+
+    // Atualiza a resposta antiga (se houver)
+    if (respostaAntiga) {
+      atualizarOpacidadeResposta(respostaAntiga);
+    }
+  });
+});
+
   // após criar 'ul' com as respostas:
 if (window.innerWidth < 900) {
   const painel = document.getElementById("painelRespostas");
@@ -479,25 +548,39 @@ if (window.innerWidth < 900) {
   };
 }
 
-  // habilita drop nas imagens
-  document.querySelectorAll('img').forEach(img => {
-    img.addEventListener('dragover', e => e.preventDefault());
-    img.addEventListener('drop', e => {
-      e.preventDefault();
-      if (itemSelecionado) {
-        const id = img.dataset.id;
-        document.getElementById('rot' + id).value = itemSelecionado[1];
-        document.getElementById('rot' + id).dataset.resp = itemSelecionado[0];
-		
-		const liUsado = document.querySelector(`li[data-id="${itemSelecionado[0]}"]`);
-			if (liUsado) {
-			liUsado.style.opacity = "0.4";
-			//liUsado.style.pointerEvents = "none"; // evita reutilizar
-		}
+// habilita drop nas imagens
+document.querySelectorAll('img').forEach(img => {
+  img.addEventListener('dragover', e => e.preventDefault());
 
-      }
-    });
+  img.addEventListener('drop', e => {
+  e.preventDefault();
+
+  if (itemSelecionado) {
+    const idImagem = img.dataset.id;
+    const campo = document.getElementById('rot' + idImagem);
+
+    // Guarda a resposta antiga antes de sobrescrever
+    const respostaAntiga = campo.dataset.resp;
+
+    // Define a nova resposta
+    campo.value = itemSelecionado[1];
+    campo.dataset.resp = itemSelecionado[0];
+
+    // Marca a nova como usada
+    const liUsado = document.querySelector(`li[data-id="${itemSelecionado[0]}"]`);
+    if (liUsado) {
+      liUsado.style.opacity = "0.4";
+    }
+
+    // Atualiza opacidade da resposta antiga, se houver
+    if (respostaAntiga) {
+      atualizarOpacidadeResposta(respostaAntiga);
+    }
+  }
   });
+
+});
+
 	const controls = document.getElementById('controls');
 	controls.innerHTML = ''; // limpa controles antigos (se houver)
 	
@@ -538,6 +621,7 @@ controls.appendChild(botaoNovo);
 
 }
 
+
 function checarRespostas() {
   pararCronometro();
 
@@ -576,6 +660,9 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('resize', ajustarInstrucao);
+
+
+
 </script>
 </body>
 </html>
