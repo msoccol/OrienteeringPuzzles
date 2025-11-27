@@ -164,6 +164,25 @@ button:hover {
   #respostas { display: none; } /* esconder respostas originais */
 }
 
+/* garante que os controles (botões) apareçam em mobile */
+#controls {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  #painelRespostasBtn { display: block; }
+  #respostas { display: none; } /* seu painel móvel usa painelRespostas */
+  #controls { padding: 0 1rem; }
+}
+/* destaque visual quando uma resposta estiver selecionada */
+li.selecionada {
+  outline: 2px solid #0078d7;
+  background: #e6f0fb;
+}
+
 </style>
 </head>
 <body>
@@ -175,6 +194,14 @@ button:hover {
   <b>Tempo:</b> <span id="tempo">00:00:00</span> —
   <b>Resultado:</b> <span id="resultado">---</span>
 </div>
+<!-- CONTROLES (sempre visível) -->
+<div id="controls" style="max-width:900px;margin:0.5rem auto 1rem; display:flex; gap:0.5rem; align-items:center;">
+  <!-- os botões serão inseridos via JS neste contêiner para garantir visibilidade no mobile -->
+</div>
+
+<!-- botão de abrir painel já existente (se já tiver, ignore) -->
+<button id="painelRespostasBtn" aria-expanded="false" style="display:none; position:fixed; bottom:10px; right:10px; z-index:9999;">Respostas ↑</button>
+<div id="painelRespostas" style="display:none; z-index:9998;"></div>
 
 <div class="container">
   <div class="col" id="imagens1"></div>
@@ -295,6 +322,7 @@ function travarTeste() {
 
 let tempo = 0;        // tempo total em milissegundos
 let timer = null;
+let selectedResponse = null; // { id, text, liEl } resposta selecionada por clique/touch
 
 function formatarTempo(msTotal) {
   const min = String(Math.floor(msTotal / 60000)).padStart(2, "0");
@@ -332,6 +360,33 @@ function sortear(qtd) {
   return dados.sort(() => 0.5 - Math.random()).slice(0, qtd);
 }
 
+function selecionarResposta(id, text, liEl) {
+  if (testeFinalizado) return;
+  // desmarca qualquer anterior
+  document.querySelectorAll('#respostas li, #painelRespostas li').forEach(x => x.classList.remove('selecionada'));
+  selectedResponse = { id: String(id), text, liEl };
+  if (liEl) liEl.classList.add('selecionada');
+}
+
+function colarRespostaEmImagem(imgId) {
+  if (testeFinalizado) return;
+  if (!selectedResponse) return;
+  const rotEl = document.getElementById('rot' + imgId);
+  if (!rotEl) return;
+  rotEl.value = selectedResponse.text;
+  rotEl.dataset.resp = selectedResponse.id;
+
+  // marcar li como usada (cinza) e torná-la inativa
+  if (selectedResponse.liEl) {
+    selectedResponse.liEl.style.opacity = "0.4";
+    selectedResponse.liEl.style.pointerEvents = "none";
+    selectedResponse.liEl.classList.remove('selecionada');
+  }
+
+  // limpar seleção
+  selectedResponse = null;
+}
+
 function montarTeste(qtd) {
   const sorteados = sortear(qtd);
   const imagens = sorteados.map(d => [d[0], 'Controles/'+ d[1]]);
@@ -349,10 +404,17 @@ function montarTeste(qtd) {
     const img = document.createElement('img');
     img.src = imgData[1];
     img.dataset.id = imgData[0];
-    img.style.touchAction = "manipulation";
+    // para cada img
+	img.style.touchAction = "manipulation";
 
-	img.addEventListener('touchstart', () => colar(imgData[0]), {passive: true});
-	img.addEventListener('click', () => colar(imgData[0]));
+	img.addEventListener('click', (e) => {
+		e.preventDefault();
+		colarRespostaEmImagem(img.dataset.id);
+	});
+	img.addEventListener('touchstart', (e) => {
+		e.preventDefault(); // evita que o toque vire scroll/drag
+		colarRespostaEmImagem(img.dataset.id);
+	}, {passive:false});
 
     const rot = document.createElement('input');
     rot.type = 'text';
@@ -376,9 +438,34 @@ function montarTeste(qtd) {
       li.classList.add('dragging');
     });
     li.addEventListener('dragend', e => li.classList.remove('dragging'));
+	// dentro do loop que cria respostas (ex.: respostas.forEach)
+	li.addEventListener('click', (e) => {
+		e.preventDefault();
+		selecionarResposta(r[0], r[1], li);
+	});
+	li.addEventListener('touchstart', (e) => {
+		e.preventDefault();
+		selecionarResposta(r[0], r[1], li);
+	}, {passive:false});
+
     ul.appendChild(li);
   });
-  respostasDiv.appendChild(ul);
+  // após criar 'ul' com as respostas:
+if (window.innerWidth < 900) {
+  const painel = document.getElementById("painelRespostas");
+  painel.innerHTML = "";
+  painel.appendChild(ul);
+  // mostrar botão e colocar toggle
+  const btn = document.getElementById("painelRespostasBtn");
+  btn.style.display = "block";
+  btn.onclick = () => {
+    painel.style.display = painel.style.display === "block" ? "none" : "block";
+    btn.setAttribute('aria-expanded', painel.style.display === "block");
+  };
+} else {
+  document.getElementById("respostas").appendChild(ul);;
+}
+ 
 	// mobile: mover lista para painel flutuante
 	if (window.innerWidth < 900) {
   document.getElementById("painelRespostas").innerHTML = "";
@@ -411,13 +498,15 @@ function montarTeste(qtd) {
       }
     });
   });
-
+	const controls = document.getElementById('controls');
+	controls.innerHTML = ''; // limpa controles antigos (se houver)
+	
   // botão verificar
   const botao = document.createElement('button');
   botao.textContent = 'Verificar Respostas';
   botao.id = 'btn-verificar';
   botao.addEventListener('click', checarRespostas);
-  respostasDiv.appendChild(botao);
+  controls.appendChild(botao);
   
   //botão Novo Teste
   const botaoNovo = document.createElement('button');
@@ -425,27 +514,27 @@ function montarTeste(qtd) {
   botaoNovo.style.background = '#555';
 
   botaoNovo.addEventListener('click', () => {
-  // mostrar container
-  document.querySelector('.container').style.display = 'grid';
-  
-  testeFinalizado = false;
-  
-  pararCronometro();
-  
-  // limpar tudo
-  document.getElementById('imagens1').innerHTML = '';
-  document.getElementById('imagens2').innerHTML = '';
-  document.getElementById('respostas').innerHTML = '';
-  document.getElementById('resultado').textContent = "---";
+	  // mostrar container
+	  document.querySelector('.container').style.display = 'grid';
+	  
+	  testeFinalizado = false;
+	  
+	  pararCronometro();
+	  
+	  // limpar tudo
+	  document.getElementById('imagens1').innerHTML = '';
+	  document.getElementById('imagens2').innerHTML = '';
+	  document.getElementById('respostas').innerHTML = '';
+	  document.getElementById('resultado').textContent = "---";
 
-  // montar novamente
-  montarTeste(quantidade);
+	  // montar novamente
+	  montarTeste(quantidade);
 
-  // iniciar contagem
-  iniciarCronometro();
+	  // iniciar contagem
+	  iniciarCronometro();
   });
 
-respostasDiv.appendChild(botaoNovo);
+controls.appendChild(botaoNovo);
 
 }
 
@@ -471,7 +560,22 @@ function checarRespostas() {
 }
 
 
-window.addEventListener('DOMContentLoaded', () => montarTeste(quantidade));
+
+function ajustarInstrucao() {
+  const h3 = document.querySelector('h3');
+  if (window.innerWidth < 900) {
+    h3.textContent = 'Toque na resposta para selecionar e toque na imagem para colar';
+  } else {
+    h3.textContent = 'Arraste a descrição até a imagem correspondente (ou clique para selecionar/colar)';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  ajustarInstrucao();
+  montarTeste(quantidade);
+});
+
+window.addEventListener('resize', ajustarInstrucao);
 </script>
 </body>
 </html>
