@@ -1,240 +1,191 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Descrição do Controle</title>
 <style>
-.travado {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-}
-
+/* ----------------- Reset / base ----------------- */
+* { box-sizing: border-box; }
 body {
-  font-family: Arial, sans-serif;
-  margin: 0.7rem;
-  background: #f8f8f8;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0.8rem;
+  background: #f6f8fb;
+  color: #111;
+  -webkit-tap-highlight-color: transparent;
 }
 
-h3 {
-  text-align: center;
-  margin-bottom: 1rem;
+/* header/status */
+h3 { text-align:center; margin:0.6rem 0 0.5rem; font-weight:600; }
+#status { text-align:center; font-size:1rem; margin-bottom:0.8rem; }
+
+/* controls row */
+#controls {
+  max-width: 980px;
+  margin: 0 auto 1rem;
+  display:flex;
+  gap:0.6rem;
+  justify-content:center;
+  align-items:center;
 }
 
+/* layout grid */
 .container {
+  max-width: 980px;
+  margin: 0 auto 2rem;
   display: grid;
-  grid-template-columns: 1fr 0.8fr 1fr;
+  grid-template-columns: 1fr 0.9fr 1fr;
   gap: 1rem;
 }
 
-/* ---------  MOBILE --------- */
-@media (max-width: 900px) {
-  .container {
-    grid-template-columns: 1fr;
-  }
-
-  img {
-    width: 100%;
-    height: auto;
-    max-width: 160px;
-  }
-
-  .col div {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    margin-bottom: 0.8rem;
-  }
-
-  input.rotulo {
-    width: 100%;
-    font-size: 1rem;
-  }
-
-  li {
-    font-size: 1.1rem;
-    padding: 14px;
-  }
-
-  button {
-    font-size: 1.1rem;
-    padding: 14px;
-  }
-  
-  #painelRespostasBtn {
-    display: block; 
-  }
-  
-  #respostas {
-    display: none; /* seu painel móvel usa painelRespostas */
-  } /* esconder respostas originais */
-  
-  #controls {
-    padding: 0 1rem;
-  }
-  
-  #painelRespostas ul {
-    padding-bottom: 80px; /* garante espaço para o botão */
-    position: fixed;
-    bottom: 60px; /* deixa espaço para o botão */
-    right: 0;
-    left: 0;
-  }
-  
-  #painelRespostas {
-    max-height: 60vh;       /* aumenta área visível */
-    overflow-y: auto;       /* rolagem suave */
-    -webkit-overflow-scrolling: touch; /* melhora no iPhone/iPad */
-    padding: 1rem;
-    touch-action: pan-y;    /* deixa o gesto de rolar mais natural */
-  }
-}
-
-/* ---------------------------------- */
-
+/* columns */
 .col {
   background: #fff;
   padding: 1rem;
   border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  min-height: 200px;
+  min-height: 220px;
+  box-shadow: 0 6px 18px rgba(8,18,30,0.06);
+  overflow: visible;
 }
 
-img {
-  width: 70px;
-  height: 70px;
-  margin: 5px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: 0.2s;
+/* images */
+.img-card {
+  display:flex;
+  gap:0.6rem;
+  align-items:center;
+  margin-bottom:0.6rem;
+}
+.img-card img {
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid #ddd;
+  cursor:pointer;
+  transition: transform .12s ease, border-color .12s ease;
+  touch-action: manipulation;
+}
+.img-card img:hover { transform: scale(1.04); border-color:#aaa; }
+
+/* label input next to image */
+.rotulo { 
+  flex:1;
+  border:none;
+  border-bottom:1px solid #e0e4ea;
+  padding:6px 8px;
+  font-size:0.95rem;
+  background:transparent;
 }
 
-img:hover {
-  transform: scale(1.05);
-  border-color: #aaa;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
+/* respostas list */
+ul { list-style:none; padding:0; margin:0; }
 li {
-  background: #eee;
-  margin: 6px 0;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: grab;
-  user-select: none;
-  transition: 0.2s;
+  background:#f0f2f6;
+  margin:6px 0;
+  padding:10px 12px;
+  border-radius:8px;
+  cursor:grab;
+  user-select:none;
+  transition:opacity .12s ease, transform .08s ease;
+  font-size:0.95rem;
 }
+li:active { transform: translateY(1px); }
+li.dragging { opacity:0.6; }
+li.selecionada { outline:2px solid #0b75d1; background:#eaf4ff; }
 
-li.dragging {
-  opacity: 0.6;
-}
-
-input.rotulo {
-  width: 80%;
-  margin-left: 8px;
-  border: none;
-  border-bottom: 1px solid #ccc;
-  background: transparent;
-  font-size: 0.9rem;
-}
-
+/* buttons */
 button {
-  margin-top: 1rem;
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  background: #0078d7;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  padding:10px 14px;
+  border-radius:8px;
+  border:none;
+  background:#0078d7;
+  color:white;
+  font-size:0.98rem;
+  cursor:pointer;
 }
+button.secondary { background:#555; }
+button:disabled { background:#9aa6b8; cursor:not-allowed; }
 
-button:hover {
-  background: #005fa3;
-}
-/* Painel flutuante de respostas */
+/* painel flutuante mobile */
 #painelRespostasBtn {
-  display: none; /* só aparece no mobile */
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background: #0078d7;
-  color: white;
-  padding: 14px 18px;
-  border-radius: 50px;
-  font-size: 1rem;
-  border: none;
-  z-index: 9999;
+  display:none;
+  position:fixed;
+  bottom:14px;
+  right:14px;
+  z-index:9999;
+  border-radius:999px;
+  box-shadow:0 6px 18px rgba(8,18,30,0.12);
 }
-
 #painelRespostas {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 2px solid #ccc;
-  padding: 1rem;
-  max-height: 50%;
-  overflow-y: auto;
-  display: none;
-  z-index: 9998;
+  display:none;
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:9998;
+  background:#fff;
+  border-top:1px solid #ddd;
+  padding:12px;
+  max-height:55vh;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* visual resposta usada */
+li.usada { opacity:0.45; }
 
+/* destaque quando travado */
+.travado { opacity:0.5; cursor:not-allowed !important; }
 
-/* garante que os controles (botões) apareçam em mobile */
-#controls {
-  display: flex;
-  gap: 0.6rem;
-  justify-content: center;
-  align-items: center;
+/* responsive: mobile-first changes */
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .img-card img { max-width:160px; width:100%; height:auto; }
+  .img-card { align-items:flex-start; gap:0.8rem; }
+  .rotulo { font-size:1rem; width:100%; }
+  li { font-size:1.05rem; padding:12px 14px; }
+  button { font-size:1.02rem; padding:12px; }
+  #painelRespostasBtn { display:block; background:#0078d7; color:#fff; padding:12px 16px; border:none; }
+  /* ensure space to scroll last item when panel is open */
+  #painelRespostas ul { padding-bottom:90px; }
+  /* hide desktop central list (we use painel) */
+  #respostas { display:none; }
+  /* controls adjust */
+  #controls { padding:0 12px; }
 }
-
-
-/* destaque visual quando uma resposta estiver selecionada */
-li.selecionada {
-  outline: 2px solid #0078d7;
-  background: #e6f0fb;
-}
-
-
-
 </style>
 </head>
 <body>
-<button id="painelRespostasBtn">Respostas ↑</button>
-<div id="painelRespostas"></div>
 
-<h3>Arraste a descrição até a imagem correspondente</h3>
-<div id="status" style="text-align:center; font-size:1.2rem; margin-bottom:1rem;">
-  <b>Tempo:</b> <span id="tempo">00:00:00</span> —
-  <b>Resultado:</b> <span id="resultado">---</span>
+<!-- painel móvel (toggle) -->
+<button id="painelRespostasBtn" aria-expanded="false">Respostas ↑</button>
+<div id="painelRespostas" aria-hidden="true"></div>
+
+<h3 id="instrucao">Arraste a descrição até a imagem correspondente</h3>
+
+<div id="status" style="text-align:center; font-size:1rem; margin-bottom:0.6rem;">
+  <strong>Tempo:</strong> <span id="tempo">00:00:00</span> — 
+  <strong>Resultado:</strong> <span id="resultado">---</span>
 </div>
-<!-- CONTROLES (sempre visível) -->
-<div id="controls" style="max-width:900px;margin:0.5rem auto 1rem; display:flex; gap:0.5rem; align-items:center;">
-  <!-- os botões serão inseridos via JS neste contêiner para garantir visibilidade no mobile -->
+
+<!-- CONTROLES -->
+<div id="controls">
+  <!-- JS irá injetar os botões aqui (sempre visíveis) -->
 </div>
 
-<!-- botão de abrir painel já existente (se já tiver, ignore) -->
-<button id="painelRespostasBtn" aria-expanded="false" style="display:none; position:fixed; bottom:10px; right:10px; z-index:9999;">Respostas ↑</button>
-<div id="painelRespostas" style="display:none; z-index:9998;"></div>
-
-<div class="container">
-  <div class="col" id="imagens1"></div>
-  <div class="col" id="respostas"></div>
-  <div class="col" id="imagens2"></div>
+<!-- LAYOUT -->
+<div class="container" id="mainContainer">
+  <div class="col" id="imagens1" aria-label="Imagens coluna 1"></div>
+  <div class="col" id="respostas" aria-label="Respostas (desktop)"></div>
+  <div class="col" id="imagens2" aria-label="Imagens coluna 2"></div>
 </div>
 
 <script>
-const quantidade = 12;
+/* --------------------------- CONFIG --------------------------- */
+const NUM_ITENS = 12; // quantidade a sortear
+const MOBILE_BREAK = 900;
 
+/* ---------- DADOS (sua lista) ---------- */
 const definirArray = () => [
   [101,'D101_Terraco.jpg','Terraço, Platô'],
   [102,'D102_Esporao.jpg','Esporão'],
@@ -247,422 +198,356 @@ const definirArray = () => [
   [109,'D109_Colina.jpg','Colina, Cume'],
   [110,'D110_Monticulo.jpg','Montículo, Cota'],
   [111,'D111_Passagem.jpg','Passagem, Colo'],
- [112,'D112_Depressao.jpg','Depressão'],
- [113,'D113_PequenaDepressao.jpg','Pequena Depressão'],
- [114,'D114_Buraco.jpg','Buraco'],
- [115,'D115_TerrenoIrregular.jpg','Terreno Irregular'],
- [116,'D116_Cupinzeiro.jpg','Cupinzeiro, Formigueiro'],
- [201,'D201_Falesia.jpg','Falésia, Penhasco'],
- [202,'D202_PilardePedra.jpg','Pilar de Pedra'],
- [203,'D203_Caverna.jpg','Caverna'],
- [204,'D204_Pedra.jpg','Pedra'],
- [205,'D205_Pedregulho.jpg','Pedregulho, Campo de Pedras'],
- [206,'D206_MontedePedras.jpg','Monte de Pedras'],
- [207,'D207_CampoPedregoso.jpg','Campo Pedregoso'],
- [208,'D208_AfloramentoRochoso.jpg','Afloramento Rochoso'],
- [209,'D209_PassagemEstreita.jpg','Passagem Estreita'],
- [210,'D210_Trincheira.jpg','Trincheira'],
- [301,'D301_Lago.jpg','Lago'],
- [302,'D302_LagoPequeno.jpg','Lago Pequeno, Lagoa'],
- [303,'D303_BuracoComAgua.jpg','Buraco com Água'],
- [304,'D304_Rio.jpg',"Rio, Curso dágua"],
- [305,'D305_CursoDaguaTemporario.jpg',"Curso dágua temporário"],
- [306,'D306_CharcoEstreito.jpg','Charco Estreito'],
- [307,'D307_Charco.jpg','Charco, Pântano'],
- [308,'D308_TerrnoFirmeEntreCharco.jpg','Terreno Firme entre Charco'],
- [309,'D310_Nascente.jpg','Nascente'],
- [310,'D309_Poco.jpg','Poço'],
- [311,'D311_TanqueComAgua.jpg','Tanque com Água'],
- [401,'D401_AreaAberta.jpg','Área Aberta'],
- [402,'D402_AreaSemiAberta.jpg','Área Semi Aberta'],
- [403,'D403_CantodeFloresta.jpg','Canto de Floresta'],
- [404,'D404_Clareira.jpg','Clareira'],
- [405,'D405_Matagal.jpg','Matagal, Moita'],
- [406,'D406_Sebe.jpg','Sebe, Renque Linear'],
- [407,'D407_BordadeVegetacao.jpg','Borda de Vegetação'],
- [408,'D408_Bosque.jpg','Bosque'],
- [409,'D409_ArvoreDistinta.jpg','Árvore Distinta'],
- [410,'D410_TocodeArvore.jpg','Toco de Árvore, Raiz'],
- [501,'D501_Estrada.jpg','Estrada'],
- [502,'D502_Caminho.jpg','Caminho, Carreiro'],
- [503,'D503_Aceiro.jpg','Aceiro, Picada'],
- [504,'D504_Ponte.jpg','Ponte'],
- [505,'D505_RedeEletrica.jpg','Rede Elétrica'],
- [506,'D506_Poste.jpg','Poste'],
- [507,'D507_Tunel.jpg','Túnel'],
- [508,'D508_MurodePedra.jpg','Muro de Pedra'],
- [509,'D509_Cerca.jpg','Cerca'],
- [510,'D510_PontodePassagem.jpg','Ponto de Passagem'],
- [511,'D511_Edificacao.jpg','Edificação'],
- [512,'D512_AreaPavimentada.jpg','Área Pavimentada'],
- [513,'D513_Ruinas.jpg','Ruínas'],
- [514,'D514_Conduto.jpg','Conduto, Tubulação'],
- [515,'D515_Torre.jpg','Torre'],
- [516,'D516_PlataformadeTiro.jpg','Plataforma de Tiro, Estande'],
- [517,'D517_Marco.jpg','Marco, Pedra Fundamental'],
- [518,'D518_Manjedoura.jpg','Manjedoura'],
- [519,'D519_TerrenoQueimado.jpg','Área de Queimadas'],
- [520,'D520_Monumento.jpg','Monumento, Estátua'],
- [521,'D521_PassagemSobreEdificacao.jpg','Passagem Sob Edificação'],
- [522,'D522_Escadaria.jpg','Escadaria'],
- [523,'D523_Canteiro.jpg','Canteiro de Flores'],
- [524,'D524_Ferrovia.jpg','Linha Férrea'],
- [601,'D601_ItemEspecial.jpg','Ítem Especial'],
- [601,'D602_ItemEspecial.jpg','Ítem Especial']
-
+  [112,'D112_Depressao.jpg','Depressão'],
+  [113,'D113_PequenaDepressao.jpg','Pequena Depressão'],
+  [114,'D114_Buraco.jpg','Buraco'],
+  [115,'D115_TerrenoIrregular.jpg','Terreno Irregular'],
+  [116,'D116_Cupinzeiro.jpg','Cupinzeiro, Formigueiro'],
+  [201,'D201_Falesia.jpg','Falésia, Penhasco'],
+  [202,'D202_PilardePedra.jpg','Pilar de Pedra'],
+  [203,'D203_Caverna.jpg','Caverna'],
+  [204,'D204_Pedra.jpg','Pedra'],
+  [205,'D205_Pedregulho.jpg','Pedregulho, Campo de Pedras'],
+  [206,'D206_MontedePedras.jpg','Monte de Pedras'],
+  [207,'D207_CampoPedregoso.jpg','Campo Pedregoso'],
+  [208,'D208_AfloramentoRochoso.jpg','Afloramento Rochoso'],
+  [209,'D209_PassagemEstreita.jpg','Passagem Estreita'],
+  [210,'D210_Trincheira.jpg','Trincheira'],
+  [301,'D301_Lago.jpg','Lago'],
+  [302,'D302_LagoPequeno.jpg','Lago Pequeno, Lagoa'],
+  [303,'D303_BuracoComAgua.jpg','Buraco com Água'],
+  [304,'D304_Rio.jpg',"Rio, Curso dágua"],
+  [305,'D305_CursoDaguaTemporario.jpg',"Curso dágua temporário"],
+  [306,'D306_CharcoEstreito.jpg','Charco Estreito'],
+  [307,'D307_Charco.jpg','Charco, Pântano'],
+  [308,'D308_TerrnoFirmeEntreCharco.jpg','Terreno Firme entre Charco'],
+  [309,'D310_Nascente.jpg','Nascente'],
+  [310,'D309_Poco.jpg','Poço'],
+  [311,'D311_TanqueComAgua.jpg','Tanque com Água'],
+  [401,'D401_AreaAberta.jpg','Área Aberta'],
+  [402,'D402_AreaSemiAberta.jpg','Área Semi Aberta'],
+  [403,'D403_CantodeFloresta.jpg','Canto de Floresta'],
+  [404,'D404_Clareira.jpg','Clareira'],
+  [405,'D405_Matagal.jpg','Matagal, Moita'],
+  [406,'D406_Sebe.jpg','Sebe, Renque Linear'],
+  [407,'D407_BordadeVegetacao.jpg','Borda de Vegetação'],
+  [408,'D408_Bosque.jpg','Bosque'],
+  [409,'D409_ArvoreDistinta.jpg','Árvore Distinta'],
+  [410,'D410_TocodeArvore.jpg','Toco de Árvore, Raiz'],
+  [501,'D501_Estrada.jpg','Estrada'],
+  [502,'D502_Caminho.jpg','Caminho, Carreiro'],
+  [503,'D503_Aceiro.jpg','Aceiro, Picada'],
+  [504,'D504_Ponte.jpg','Ponte'],
+  [505,'D505_RedeEletrica.jpg','Rede Elétrica'],
+  [506,'D506_Poste.jpg','Poste'],
+  [507,'D507_Tunel.jpg','Túnel'],
+  [508,'D508_MurodePedra.jpg','Muro de Pedra'],
+  [509,'D509_Cerca.jpg','Cerca'],
+  [510,'D510_PontodePassagem.jpg','Ponto de Passagem'],
+  [511,'D511_Edificacao.jpg','Edificação'],
+  [512,'D512_AreaPavimentada.jpg','Área Pavimentada'],
+  [513,'D513_Ruinas.jpg','Ruínas'],
+  [514,'D514_Conduto.jpg','Conduto, Tubulação'],
+  [515,'D515_Torre.jpg','Torre'],
+  [516,'D516_PlataformadeTiro.jpg','Plataforma de Tiro, Estande'],
+  [517,'D517_Marco.jpg','Marco, Pedra Fundamental'],
+  [518,'D518_Manjedoura.jpg','Manjedoura'],
+  [519,'D519_TerrenoQueimado.jpg','Área de Queimadas'],
+  [520,'D520_Monumento.jpg','Monumento, Estátua'],
+  [521,'D521_PassagemSobreEdificacao.jpg','Passagem Sob Edificação'],
+  [522,'D522_Escadaria.jpg','Escadaria'],
+  [523,'D523_Canteiro.jpg','Canteiro de Flores'],
+  [524,'D524_Ferrovia.jpg','Linha Férrea'],
+  [601,'D601_ItemEspecial.jpg','Ítem Especial'],
+  [602,'D602_ItemEspecial.jpg','Ítem Especial']
 ];
 
+/* --------------------------- ESTADO --------------------------- */
 let testeFinalizado = false;
-
-function travarTeste() {
-   // desabilita inputs
-  document.querySelectorAll('#respostas input').forEach(inp => {
-    inp.disabled = true;
-    inp.classList.add('travado');
-  });
-
-  // trava imagens
-  document.querySelectorAll('#imagens1 img, #imagens2 img').forEach(img => {
-    img.style.pointerEvents = 'none';
-    img.classList.add('travado');
-  });
-
-  // trava itens arrastáveis
-  document.querySelectorAll('#respostas li').forEach(li => {
-    li.draggable = false;
-    li.style.pointerEvents = 'none';
-    li.classList.add('travado');
-  });
-
-  // desabilita botão
-  const botao = document.getElementById('btn-verificar');
-  if (botao) {
-    botao.disabled = true;
-    botao.style.background = '#888';
-    botao.style.cursor = 'not-allowed';
-  }
-}
-
-let tempo = 0;        // tempo total em milissegundos
+let tempo = 0;
 let timer = null;
-let selectedResponse = null; // { id, text, liEl } resposta selecionada por clique/touch
+let itemSelecionado = null;   // usado para drag (desktop)
+let selectedResponse = null;  // usado para selecionar por clique/touch {id,text,li}
 
+/* --------------------------- UTIL --------------------------- */
+function isMobile() { return window.innerWidth < MOBILE_BREAK; }
 function formatarTempo(msTotal) {
-  const min = String(Math.floor(msTotal / 60000)).padStart(2, "0");
-  const seg = String(Math.floor((msTotal % 60000) / 1000)).padStart(2, "0");
-  const ms  = String(Math.floor((msTotal % 1000) / 10)).padStart(2, "0"); // 0–99
-
+  const min = String(Math.floor(msTotal / 60000)).padStart(2,'0');
+  const seg = String(Math.floor((msTotal % 60000) / 1000)).padStart(2,'0');
+  const ms  = String(Math.floor((msTotal % 1000) / 10)).padStart(2,'0');
   return `${min}:${seg}:${ms}`;
 }
-
 function iniciarCronometro() {
   if (timer) clearInterval(timer);
-
   tempo = 0;
-  document.getElementById("tempo").textContent = "00:00:00";
-
-  timer = setInterval(() => {
-    tempo += 10; // incrementa em 10 ms
-    document.getElementById("tempo").textContent = formatarTempo(tempo);
-  }, 10);
+  document.getElementById('tempo').textContent = '00:00:00';
+  timer = setInterval(()=>{ tempo+=10; document.getElementById('tempo').textContent = formatarTempo(tempo); }, 10);
 }
+function pararCronometro(){ if(timer){ clearInterval(timer); timer = null; } }
 
-function pararCronometro() {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-  }
-}
-
-
-let itemSelecionado = null;
-
-function sortear(qtd) {
-  const dados = definirArray();
-  if (qtd > dados.length) qtd = dados.length;
-  return dados.sort(() => 0.5 - Math.random()).slice(0, qtd);
-}
-
-function selecionarResposta(id, text, liEl) {
+/* --------------------------- RANK/RESULT (simples) --------------------------- */
+function checarRespostas(){
   if (testeFinalizado) return;
-  // desmarca qualquer anterior
-  document.querySelectorAll('#respostas li, #painelRespostas li').forEach(x => x.classList.remove('selecionada'));
-  selectedResponse = { id: String(id), text, liEl };
-  if (liEl) liEl.classList.add('selecionada');
+  pararCronometro();
+
+  const inputs = document.querySelectorAll('.rotulo');
+  const total = inputs.length;
+  let acertos = 0;
+  inputs.forEach(inp => { const id = inp.id.replace('rot',''); if (inp.dataset.resp === id) acertos++; });
+
+  document.getElementById('resultado').textContent = `${acertos} / ${total}`;
+  testeFinalizado = true;
+  travarTeste();
 }
 
-function colarRespostaEmImagem(imgId) {
-  if (testeFinalizado) return;
-  if (!selectedResponse) return;
-  const rotEl = document.getElementById('rot' + imgId);
-  if (!rotEl) return;
-  rotEl.value = selectedResponse.text;
-  rotEl.dataset.resp = selectedResponse.id;
-
-  // marcar li como usada (cinza) e torná-la inativa
-  if (selectedResponse.liEl) {
-    selectedResponse.liEl.style.opacity = "0.4";
-    //selectedResponse.liEl.style.pointerEvents = "none";
-    selectedResponse.liEl.classList.remove('selecionada');
-  }
-
-  // limpar seleção
-  selectedResponse = null;
+/* --------------------------- BLOQUEIOS --------------------------- */
+function travarTeste(){
+  document.querySelectorAll('.rotulo').forEach(i=> i.disabled=true);
+  document.querySelectorAll('#imagens1 img, #imagens2 img').forEach(im=> { im.style.pointerEvents='none'; im.classList.add('travado');});
+  document.querySelectorAll('#respostas li, #painelRespostas li').forEach(li=> { li.draggable = false; li.style.pointerEvents='none'; li.classList.add('travado');});
+  const b = document.getElementById('btn-verificar'); if(b){ b.disabled=true; b.style.background='#888';}
 }
 
-function atualizarOpacidadeResposta(idResposta) {
-  // verifica todos os campos
-  const aindaUsada = [...document.querySelectorAll('input[id^="rot"]')]
-    .some(campo => campo.dataset.resp === idResposta);
-
+/* --------------------------- OPACIDADE / USO --------------------------- */
+function atualizarOpacidadeResposta(idResposta){
+  if(!idResposta) return;
+  const aindaUsada = [...document.querySelectorAll('.rotulo')].some(c => c.dataset.resp === idResposta);
   const li = document.querySelector(`li[data-id="${idResposta}"]`);
-  if (!li) return;
-
-  if (aindaUsada) {
-    li.style.opacity = "0.4"; // continua usada
-  } else {
-    li.style.opacity = "1";   // não está mais usada → volta ao normal
-  }
+  if(!li) return;
+  li.classList.toggle('usada', !!aindaUsada);
 }
-function montarTeste(qtd) {
+
+/* --------------------------- SORT / MONTAR --------------------------- */
+function sortear(qtd){
+  const dados = definirArray();
+  if(qtd > dados.length) qtd = dados.length;
+  return dados.sort(()=>0.5 - Math.random()).slice(0,qtd);
+}
+
+function montarTeste(qtd){
+  // reset estado
+  testeFinalizado = false;
+  pararCronometro();
+  itemSelecionado = null;
+  selectedResponse = null;
+
+  // limpa áreas
+  document.getElementById('imagens1').innerHTML = '';
+  document.getElementById('imagens2').innerHTML = '';
+  document.getElementById('respostas').innerHTML = '';
+  document.getElementById('painelRespostas').innerHTML = '';
+  document.getElementById('resultado').textContent = '---';
+
+  // gerar dados
   const sorteados = sortear(qtd);
-  const imagens = sorteados.map(d => [d[0], 'Controles/'+ d[1]]);
-  const respostas = sorteados.map(d => [d[0], d[2]]);
+  const imagens = sorteados.map(d => ({id: String(d[0]), src: 'Controles/' + d[1]}));
+  const respostas = sorteados.map(d => ({id: String(d[0]), text: d[2]}));
   const metade = Math.ceil(imagens.length / 2);
 
-  const imagens1 = document.getElementById('imagens1');
-  const imagens2 = document.getElementById('imagens2');
-  const respostasDiv = document.getElementById('respostas');
-  iniciarCronometro();
-
-  // imagens
-  imagens.forEach((imgData, i) => {
+  // montar imagens (colocar inputs)
+  imagens.forEach((imgObj, idx) => {
     const container = document.createElement('div');
-    const img = document.createElement('img');
-    img.src = imgData[1];
-    img.dataset.id = imgData[0];
-    // para cada img
-	img.style.touchAction = "manipulation";
+    container.className = 'img-card';
 
-	img.addEventListener('click', (e) => {
-		e.preventDefault();
-		colarRespostaEmImagem(img.dataset.id);
-	});
-	img.addEventListener('touchstart', (e) => {
-		e.preventDefault(); // evita que o toque vire scroll/drag
-		colarRespostaEmImagem(img.dataset.id);
-	}, {passive:false});
+    const img = document.createElement('img');
+    img.src = imgObj.src;
+    img.alt = imgObj.id;
+    img.dataset.id = imgObj.id;
+    img.draggable = false; // imagens não são arrastadas
+    img.style.touchAction = 'manipulation';
+
+    // imagem click/touch behavior (desktop: can be drop target or click-to-paste; mobile: click-to-paste)
+    img.addEventListener('click', (e) => {
+      e.preventDefault();
+      // if a response was selected by click (mobile) -> paste; otherwise do nothing (desktop drag expected)
+      if(selectedResponse) {
+        colarViaSelecao(img.dataset.id);
+      }
+    });
+    img.addEventListener('touchstart', (e) => {
+      // prevent scroll hijack on mobile
+      if(selectedResponse) { e.preventDefault(); colarViaSelecao(img.dataset.id); }
+    }, {passive:false});
 
     const rot = document.createElement('input');
     rot.type = 'text';
     rot.className = 'rotulo';
-    rot.id = 'rot' + imgData[0];
+    rot.id = 'rot' + imgObj.id;
+    rot.autocomplete = 'off';
+    rot.readOnly = true; // read-only so user can't type; answers only via UI
+    rot.dataset.resp = ''; // id da resposta associada
+
     container.appendChild(img);
     container.appendChild(rot);
-    if (i < metade) imagens1.appendChild(container);
-    else imagens2.appendChild(container);
+
+    if(idx < metade) document.getElementById('imagens1').appendChild(container);
+    else document.getElementById('imagens2').appendChild(container);
   });
 
-  // respostas
+  // montar lista de respostas (ul)
   const ul = document.createElement('ul');
-  respostas.sort(() => 0.5 - Math.random()).forEach(r => {
+  // embaralhar respostas
+  respostas.sort(()=>0.5 - Math.random()).forEach(r => {
     const li = document.createElement('li');
-    li.textContent = r[1];
-    li.draggable = true;
-    li.dataset.id = r[0];
-    li.addEventListener('dragstart', e => {
-      itemSelecionado = r;
-      li.classList.add('dragging');
+    li.textContent = r.text;
+    li.dataset.id = r.id;
+    // draggable só no desktop
+    if(!isMobile()){
+      li.draggable = true;
+      li.addEventListener('dragstart', (ev) => {
+        itemSelecionado = { id: r.id, text: r.text };
+        li.classList.add('dragging');
+        // use text data for drop
+        try { ev.dataTransfer.setData('text/plain', JSON.stringify(itemSelecionado)); } catch(e){}
+      });
+      li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    } else {
+      li.draggable = false;
+    }
+
+    // click / touch to select (works both mobile and desktop)
+    li.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      selecionarPorClique(r.id, r.text, li);
     });
-    li.addEventListener('dragend', e => li.classList.remove('dragging'));
-	// dentro do loop que cria respostas (ex.: respostas.forEach)
-	li.addEventListener('click', (e) => {
-		e.preventDefault();
-		selecionarResposta(r[0], r[1], li);
-	});
-	li.addEventListener('touchstart', (e) => {
-		e.preventDefault();
-		selecionarResposta(r[0], r[1], li);
-	}, {passive:false});
+    li.addEventListener('touchstart', (ev) => {
+      ev.preventDefault();
+      selecionarPorClique(r.id, r.text, li);
+    }, {passive:false});
 
     ul.appendChild(li);
   });
-  // clique para selecionar resposta (mobile e desktop)
-  
-document.querySelectorAll('#respostas li').forEach(li => {
-  li.addEventListener('click', () => {
 
-    // Identifica qual resposta foi clicada
-    const idResposta = li.dataset.id;
-    const textoResposta = li.textContent.trim();
-
-    // Verifica se há uma imagem selecionada para receber o clique
-    if (!imgSelecionada) return;
-
-    const idImagem = imgSelecionada.dataset.id;
-    const campo = document.getElementById('rot' + idImagem);
-
-    // Guarda a resposta antiga antes de alterar
-    const respostaAntiga = campo.dataset.resp;
-
-    // Define a nova resposta
-    campo.value = textoResposta;
-    campo.dataset.resp = idResposta;
-
-    // Marca a resposta nova como usada
-    li.style.opacity = "0.4";
-
-    // Atualiza a resposta antiga (se houver)
-    if (respostaAntiga) {
-      atualizarOpacidadeResposta(respostaAntiga);
-    }
-  });
-});
-
-  // após criar 'ul' com as respostas:
-if (window.innerWidth < 900) {
-  const painel = document.getElementById("painelRespostas");
-  painel.innerHTML = "";
-  painel.appendChild(ul);
-  // mostrar botão e colocar toggle
-  const btn = document.getElementById("painelRespostasBtn");
-  btn.style.display = "block";
-  btn.onclick = () => {
-    painel.style.display = painel.style.display === "block" ? "none" : "block";
-    btn.setAttribute('aria-expanded', painel.style.display === "block");
-  };
-} else {
-  document.getElementById("respostas").appendChild(ul);;
-}
- 
-	// mobile: mover lista para painel flutuante
-	if (window.innerWidth < 900) {
-  document.getElementById("painelRespostas").innerHTML = "";
-  document.getElementById("painelRespostas").appendChild(ul);
-  
-  // botão abre/fecha painel
-  const btn = document.getElementById("painelRespostasBtn");
-  btn.onclick = () => {
-    const painel = document.getElementById("painelRespostas");
-    painel.style.display = painel.style.display === "block" ? "none" : "block";
-  };
-}
-
-// habilita drop nas imagens
-document.querySelectorAll('img').forEach(img => {
-  img.addEventListener('dragover', e => e.preventDefault());
-
-  img.addEventListener('drop', e => {
-  e.preventDefault();
-
-  if (itemSelecionado) {
-    const idImagem = img.dataset.id;
-    const campo = document.getElementById('rot' + idImagem);
-
-    // Guarda a resposta antiga antes de sobrescrever
-    const respostaAntiga = campo.dataset.resp;
-
-    // Define a nova resposta
-    campo.value = itemSelecionado[1];
-    campo.dataset.resp = itemSelecionado[0];
-
-    // Marca a nova como usada
-    const liUsado = document.querySelector(`li[data-id="${itemSelecionado[0]}"]`);
-    if (liUsado) {
-      liUsado.style.opacity = "0.4";
-    }
-
-    // Atualiza opacidade da resposta antiga, se houver
-    if (respostaAntiga) {
-      atualizarOpacidadeResposta(respostaAntiga);
-    }
-  }
-  });
-
-});
-
-	const controls = document.getElementById('controls');
-	controls.innerHTML = ''; // limpa controles antigos (se houver)
-	
-  // botão verificar
-  const botao = document.createElement('button');
-  botao.textContent = 'Verificar Respostas';
-  botao.id = 'btn-verificar';
-  botao.addEventListener('click', checarRespostas);
-  controls.appendChild(botao);
-  
-  //botão Novo Teste
-  const botaoNovo = document.createElement('button');
-  botaoNovo.textContent = 'Novo Teste';
-  botaoNovo.style.background = '#555';
-
-  botaoNovo.addEventListener('click', () => {
-	  // mostrar container
-	  document.querySelector('.container').style.display = 'grid';
-	  
-	  testeFinalizado = false;
-	  
-	  pararCronometro();
-	  
-	  // limpar tudo
-	  document.getElementById('imagens1').innerHTML = '';
-	  document.getElementById('imagens2').innerHTML = '';
-	  document.getElementById('respostas').innerHTML = '';
-	  document.getElementById('resultado').textContent = "---";
-
-	  // montar novamente
-	  montarTeste(quantidade);
-
-	  // iniciar contagem
-	  iniciarCronometro();
-  });
-
-controls.appendChild(botaoNovo);
-
-}
-
-
-function checarRespostas() {
-  pararCronometro();
-
-  const inputs = document.querySelectorAll('.rotulo');
-  let total = inputs.length;
-  let acertos = 0;
-
-  inputs.forEach(inp => {
-    const id = inp.id.replace('rot','');
-    const resposta = inp.dataset.resp;
-    if (id === resposta) acertos++;
-  });
-
-  // exibe resultado na página
-  document.getElementById("resultado").textContent = `${acertos} / ${total}`;
-  testeFinalizado = true;     // trava tudo
-  pararCronometro();          // para o cronômetro
-
-  travarTeste();      
-}
-
-
-
-function ajustarInstrucao() {
-  const h3 = document.querySelector('h3');
-  if (window.innerWidth < 900) {
-    h3.textContent = 'Toque na resposta para selecionar e toque na imagem para colar';
+  // inserir lista na área correta dependendo do device
+  if(isMobile()){
+    // painel móvel
+    const painel = document.getElementById('painelRespostas');
+    painel.innerHTML = '';
+    painel.appendChild(ul);
+    document.getElementById('painelRespostasBtn').style.display = 'block';
+    // ensure hidden by default
+    painel.style.display = 'none';
+    document.getElementById('painelRespostasBtn').setAttribute('aria-expanded','false');
+    document.getElementById('painelRespostasBtn').onclick = () => {
+      painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
+      document.getElementById('painelRespostasBtn').setAttribute('aria-expanded', painel.style.display === 'block');
+    };
   } else {
-    h3.textContent = 'Arraste a descrição até a imagem correspondente (ou clique para selecionar/colar)';
+    const respostasArea = document.getElementById('respostas');
+    respostasArea.innerHTML = '';
+    respostasArea.appendChild(ul);
+    // hide mobile toggles
+    document.getElementById('painelRespostasBtn').style.display = 'none';
+    document.getElementById('painelRespostas').style.display = 'none';
   }
+
+  /* ------------- habilita drop targets (desktop only) ------------- */
+  if(!isMobile()){
+    document.querySelectorAll('#imagens1 img, #imagens2 img').forEach(img => {
+      img.addEventListener('dragover', e => e.preventDefault());
+      img.addEventListener('drop', e => {
+        e.preventDefault();
+        let payload = null;
+        try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch(err){ payload = itemSelecionado; }
+        if(!payload) return;
+
+        const campo = document.getElementById('rot' + img.dataset.id);
+        const respostaAntiga = campo.dataset.resp;
+
+        // aplicar nova resposta
+        campo.value = payload.text;
+        campo.dataset.resp = payload.id;
+
+        // marcar a nova como usada
+        const liNova = document.querySelector(`li[data-id="${payload.id}"]`);
+        if(liNova) liNova.classList.add('usada');
+
+        // restaurar opacidade da antiga (se necessário)
+        if(respostaAntiga) atualizarOpacidadeResposta(respostaAntiga);
+      });
+    });
+  }
+
+  // sempre criar/atualizar os botões no controls
+  montarBotoes();
+  // iniciar cronometro
+  iniciarCronometro();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+/* --------------------------- seleção por clique/touch --------------------------- */
+function selecionarPorClique(id, text, liEl){
+  if(testeFinalizado) return;
+  // desmarca anterior
+  document.querySelectorAll('li').forEach(x => x.classList.remove('selecionada'));
+  selectedResponse = { id: String(id), text, liEl };
+  if(liEl) liEl.classList.add('selecionada');
+}
+
+/* colar via seleção (quando imagem é clicada após selecionar resposta) */
+function colarViaSelecao(imgId){
+  if(testeFinalizado || !selectedResponse) return;
+  const campo = document.getElementById('rot' + imgId);
+  const respostaAntiga = campo.dataset.resp;
+
+  // aplica a nova
+  campo.value = selectedResponse.text;
+  campo.dataset.resp = selectedResponse.id;
+
+  // marca nova como usada (visual)
+  if(selectedResponse.liEl) selectedResponse.liEl.classList.add('usada');
+
+  // atualiza a antiga (se necessário)
+  if(respostaAntiga) atualizarOpacidadeResposta(respostaAntiga);
+
+  // limpa seleção
+  if(selectedResponse.liEl) selectedResponse.liEl.classList.remove('selecionada');
+  selectedResponse = null;
+}
+
+/* --------------------------- BOTÕES --------------------------- */
+function montarBotoes(){
+  const controls = document.getElementById('controls');
+  controls.innerHTML = ''; // limpar
+
+  const btnVer = document.createElement('button');
+  btnVer.id = 'btn-verificar';
+  btnVer.textContent = 'Verificar Respostas';
+  btnVer.addEventListener('click', checarRespostas);
+  controls.appendChild(btnVer);
+
+  const btnNovo = document.createElement('button');
+  btnNovo.className = 'secondary';
+  btnNovo.textContent = 'Novo Teste';
+  btnNovo.addEventListener('click', ()=>{
+    // reset and rebuild
+    montarTeste(NUM_ITENS);
+  });
+  controls.appendChild(btnNovo);
+}
+
+/* --------------------------- inicialização / instrução responsiva --------------------------- */
+function ajustarInstrucao(){
+  const h = document.getElementById('instrucao');
+  if(isMobile()) h.textContent = 'Toque na resposta para selecionar e depois toque na imagem para colar';
+  else h.textContent = 'Arraste a descrição até a imagem correspondente (ou clique para selecionar/colar)';
+}
+
+/* --------------------------- inicio --------------------------- */
+window.addEventListener('DOMContentLoaded', ()=>{
   ajustarInstrucao();
-  montarTeste(quantidade);
+  montarTeste(NUM_ITENS);
 });
-
-window.addEventListener('resize', ajustarInstrucao);
-
-
-
+window.addEventListener('resize', ()=> {
+  // small debounce: if breakpoint changed we rebuild
+  const wasMobile = document.body.dataset._mobile === '1';
+  const nowMobile = isMobile();
+  document.body.dataset._mobile = nowMobile ? '1' : '0';
+  ajustarInstrucao();
+  // if breakpoint toggled, rebuild to reattach handlers correctly
+  if((nowMobile && !wasMobile) || (!nowMobile && wasMobile)){
+    montarTeste(NUM_ITENS);
+  }
+});
 </script>
 </body>
 </html>
