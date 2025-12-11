@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Descrição do Controle</title>
+<title>Descrição do Controle — Versão Final</title>
 <style>
 /* ----------------- Reset / base ----------------- */
 * { box-sizing: border-box; }
@@ -145,7 +145,7 @@ button:disabled { background:#9aa6b8; cursor:not-allowed; }
 /* responsive: mobile-first changes */
 @media (max-width: 900px) {
   .container { grid-template-columns: 1fr; }
-  .img-card img { max-width:100px; width:100%; height:auto; }
+  .img-card img { max-width:160px; width:100%; height:auto; }
   .img-card { align-items:flex-start; gap:0.8rem; }
   .rotulo { font-size:1rem; width:100%; }
   li { font-size:1.05rem; padding:12px 14px; }
@@ -158,6 +158,21 @@ button:disabled { background:#9aa6b8; cursor:not-allowed; }
   /* controls adjust */
   #controls { padding:0 12px; }
 }
+
+/* estilo simples para botões de compartilhamento (opcional) */
+#shareArea button {
+  padding:10px 12px;
+  border-radius:8px;
+  border:none;
+  background:#ff5c00;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+#shareArea button.secondary {
+  background:#0078d7;
+}
+
 </style>
 </head>
 <body>
@@ -169,8 +184,15 @@ button:disabled { background:#9aa6b8; cursor:not-allowed; }
 <h3 id="instrucao">Arraste a descrição até a imagem correspondente</h3>
 
 <div id="status" style="text-align:center; font-size:1rem; margin-bottom:0.6rem;">
-  <strong>Tempo:</strong> <span id="tempo">00:00:00</span> — 
+  <strong>Tempo:</strong> <span id="tempo">00:00.000</span> — 
   <strong>Resultado:</strong> <span id="resultado">---</span>
+</div>
+
+<!-- Área de compartilhamento / imagem -->
+<div id="shareArea" style="display:none; text-align:center; margin:12px 0;">
+  <button id="btnCopiarFrase" style="margin-right:8px;">Copiar texto para Instagram</button>
+  <button id="btnAbrirInstagram" style="margin-right:8px;">Abrir @oApurador</button>
+  <button id="btnGerarImagem">Baixar imagem do resultado</button>
 </div>
 
 <!-- CONTROLES -->
@@ -279,8 +301,8 @@ function isMobile() { return window.innerWidth < MOBILE_BREAK; }
 function formatarTempo(msTotal) {
   const min = String(Math.floor(msTotal / 60000)).padStart(2,'0');
   const seg = String(Math.floor((msTotal % 60000) / 1000)).padStart(2,'0');
-  const ms  = String(Math.floor((msTotal % 1000) / 10)).padStart(2,'0');
-  return `${min}:${seg}:${ms}`;
+  const ms  = String(Math.floor((msTotal % 1000) /10)).padStart(2,'0');
+  return `${min}:${seg}.${ms}`;
 }
 function iniciarCronometro() {
   if (timer) clearInterval(timer);
@@ -303,6 +325,9 @@ function checarRespostas(){
   document.getElementById('resultado').textContent = `${acertos} / ${total}`;
   testeFinalizado = true;
   travarTeste();
+  
+  // mostrar funcionalidades de compartilhar / baixar imagem
+  mostrarShareArea(acertos);
 }
 
 /* --------------------------- BLOQUEIOS --------------------------- */
@@ -473,6 +498,10 @@ function montarTeste(qtd){
 
   // sempre criar/atualizar os botões no controls
   montarBotoes();
+  
+  // ESCONDER ÁREA DE COMPARTILHAMENTO
+    document.getElementById('shareArea').style.display = 'none';
+	
   // iniciar cronometro
   iniciarCronometro();
 }
@@ -506,6 +535,129 @@ function colarViaSelecao(imgId){
   if(selectedResponse.liEl) selectedResponse.liEl.classList.remove('selecionada');
   selectedResponse = null;
 }
+/* --------------------------- COMPARTILHAR / GERAR IMAGEM --------------------------- */
+
+/**
+ * Texto que será copiado para Instagram (com @oApurador)
+ * Você pode ajustar a mensagem aqui.
+ */
+function montarTextoCompartilhamento(acertos, tempoFormatado) {
+  return `Acabei de fazer o teste de orientação e acertei ${acertos} respostas! 🏁\n` +
+         `Tempo: ${tempoFormatado} ⏱\n` +
+         `Teste feito no @oApurador\n#Orienteering #oApurador`;
+}
+
+/**
+ * Mostrar area de compartilhamento quando o teste terminar
+ */
+function mostrarShareArea(acertos) {
+  const share = document.getElementById('shareArea');
+  share.style.display = 'block';
+
+  // (re)atribui behavior dos botões
+  const btnCopy = document.getElementById('btnCopiarFrase');
+  const btnOpen = document.getElementById('btnAbrirInstagram');
+  const btnImage = document.getElementById('btnGerarImagem');
+
+  // preparar texto atual
+  const tempoFormatado = document.getElementById('tempo').textContent || formatarTempo(tempo);
+  const texto = montarTextoCompartilhamento(acertos, tempoFormatado);
+
+  btnCopy.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      alert('Texto copiado! Agora cole no seu post ou story do Instagram.');
+    } catch (err) {
+      // fallback
+      const ta = document.createElement('textarea'); ta.value = texto;
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('Texto copiado para a área de transferência.');
+    }
+  };
+
+  btnOpen.onclick = () => {
+    // abre o perfil do instagram em nova aba (ou app em mobile)
+    window.open('https://instagram.com/oApurador', '_blank');
+  };
+
+  btnImage.onclick = () => {
+    //const msTempo = tempo; // pega o tempo global em ms
+    gerarImagemResultado(acertos, NUM_ITENS, tempoFormatado);
+  };
+}
+
+/**
+ * Gera imagem PNG em canvas com tema "mapa de orientação" e força download.
+ * - acertos: número de acertos (int)
+ * - tempoMs: tempo em milissegundos (int)
+ */
+async function gerarImagemResultado(acertos, total, tempo) {
+  const canvas = document.getElementById('resultadoCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const W = canvas.width;
+  const H = canvas.height;
+
+  // ---- FUNDO (MAPA DE ORIENTAÇÃO) ----
+  const bg = new Image();
+  //bg.src = "mapa.png"; // <--- ALTERE AQUI
+
+  //await new Promise(res => { bg.onload = res; });
+
+  //ctx.drawImage(bg, 0, 0, W, H);
+
+  // ---- CARD CENTRAL ----
+  const cardW = W * 0.82;
+  const cardH = H * 0.45;
+  const cardX = (W - cardW) / 2;
+  const cardY = H * 0.28;
+
+  // gradiente 45°
+  const grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+  grad.addColorStop(0, "#ff8c3c");
+  grad.addColorStop(1, "#ffffff");
+
+  ctx.fillStyle = grad;
+  ctx.strokeStyle = "#00000055";
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.roundRect(cardX, cardY, cardW, cardH, 40);
+  ctx.fill();
+  ctx.stroke();
+
+  // ---- TEXTO ----
+  ctx.fillStyle = "#000";
+  ctx.textAlign = "center";
+  ctx.font = "40px Arial Black";
+  ctx.fillText("DESCRIÇÃO DE CONTROLE", W / 2, cardY + 120);
+  ctx.font = "80px Arial Black";
+  ctx.fillText("RESULTADO", W / 2, cardY + 200);
+
+  ctx.font = "140px Arial Black";
+  ctx.fillStyle = "#c84b00";
+  ctx.fillText(`${acertos}/${total}`, W / 2, H/2);
+
+  ctx.fillStyle = "#000";
+  ctx.font = "80px Arial";
+  ctx.fillText(`Tempo: ${tempo}`, W / 2, H/2 + 120);
+
+   // ---- @oApurador footer
+  ctx.font = '700 30px "Arial"';
+  ctx.fillStyle = '#0b3b1f';
+  ctx.fillText('Teste criado pelo', W/2, cardY + cardH - 150);
+  ctx.fillStyle = '#0b66c2';
+  ctx.font = '800 40px "Arial"';
+  ctx.fillText('@oApurador', W/2, cardY + cardH - 100);
+  
+  // ---- SALVAR IMAGEM ----
+  const link = document.createElement("a");
+  link.download = "resultado_teste.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
 
 /* --------------------------- BOTÕES --------------------------- */
 function montarBotoes(){
@@ -549,9 +701,9 @@ window.addEventListener('resize', ()=> {
     montarTeste(NUM_ITENS);
   }
 });
+
 </script>
+<canvas id="resultadoCanvas" width="1080" height="1920" style="display:none;"></canvas>
+
 </body>
 </html>
-
-
-
