@@ -602,11 +602,11 @@ async function gerarImagemResultado(acertos, total, tempo) {
 
   // ---- FUNDO (MAPA DE ORIENTAÇÃO) ----
   const bg = new Image();
-  //bg.src = "mapa.png"; // <--- ALTERE AQUI
+  bg.src = "mapa.png"; // <--- ALTERE AQUI
 
-  //await new Promise(res => { bg.onload = res; });
+  await new Promise(res => { bg.onload = res; });
 
-  //ctx.drawImage(bg, 0, 0, W, H);
+  ctx.drawImage(bg, 0, 0, W, H);
 
   // ---- CARD CENTRAL ----
   const cardW = W * 0.82;
@@ -707,3 +707,4 @@ window.addEventListener('resize', ()=> {
 
 </body>
 </html>
+
